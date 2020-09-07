@@ -1,0 +1,42 @@
+version: "3"
+services:
+  web:
+    image: node:12
+    volumes:
+      - ${PWD:-./}:/workspace/nestjs-starter-project
+    working_dir: /workspace/nestjs-starter-project
+    command: bash -c "yarn start"
+    depends_on:
+      - postgres
+    networks:
+      - resource-network
+    environment:
+      - DB_HOST=postgres
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=test
+      - DB_NAME=product
+      - DB_PORT=5432
+      - PORT=8080
+      - REVISION_ID=0.0.1
+      - MIGRATION_AUTO=true
+    ports:
+      - "8080:8080"
+  postgres:
+    image: postgres:9.6-alpine
+    networks:
+      - resource-network
+    ports:
+      - "5432:5432"
+    expose:
+      - "5432"
+    environment:
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=product
+    volumes:
+      - my-db:/var/lib/postgresql/data
+networks:
+    resource-network:
+      driver: bridge
+volumes:
+  my-db:
