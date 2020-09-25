@@ -1,19 +1,17 @@
-SERVICE=nestjs-starter-pack
-SERVICE_PATH=$(SERVICE)
+SERVICE_NAME=nestjs-starter-pack
 REVISION_ID?=unknown
-BUILDER_IMAGE=node:12
+IMAGE=node:12
 
-RUN=docker run --rm \
-	-v $(CURDIR):/workspace/$(SERVICE_PATH) \
-	-w /workspace/$(SERVICE_PATH)
+DOCKER_RUN=docker run --rm \
+	-v $(CURDIR):/workspace/$(SERVICE_NAME) \
+	-w /workspace/$(SERVICE_NAME)
 
-build:
-	$(RUN) $(BUILDER_IMAGE) npm rebuild --update-binary
-	$(RUN) $(BUILDER_IMAGE) yarn install
-	$(RUN) $(BUILDER_IMAGE) yarn build
+buildApplication:
+	$(DOCKER_RUN) $(IMAGE) yarn install
+	$(DOCKER_RUN) $(IMAGE) yarn build
 	docker build --tag="$(SERVICE):$(REVISION_ID)" --tag="$(SERVICE):latest" .
 
-run:
+runApplication:
 	docker-compose up
 
 stop:
@@ -24,7 +22,6 @@ clean:
 
 rebuild:
 	docker-compose down
-	$(RUN) $(BUILDER_IMAGE) npm rebuild --update-binary
-	$(RUN) $(BUILDER_IMAGE) yarn install
-	$(RUN) $(BUILDER_IMAGE) yarn build
+	$(DOCKER_RUN) $(IMAGE) yarn install
+	$(DOCKER_RUN) $(IMAGE) yarn build
 	docker-compose up

@@ -36,10 +36,10 @@ A simple nestjs starter project, including integration with openAPI Swagger and 
 ## Installation
 
 ```bash
-$ make build
+$ make buildApplication
 ```
 
 ## Running the app
 
 ```bash
-$ make run
+$ make runApplication
