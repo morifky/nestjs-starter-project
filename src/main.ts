@@ -13,7 +13,7 @@ async function bootstrap() {
   const options = new DocumentBuilder()
   .setTitle('NEST APP')
   .setDescription('NEST APP documentation')
-  .setVersion('1.0')
+  .setVersion(`${buildInformation}`)
   .addBearerAuth()
   .build()
 

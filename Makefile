@@ -1,5 +1,5 @@
 SERVICE_NAME=nestjs-starter-pack
-REVISION_ID?=unknown
+VERSION?=unknown
 IMAGE=node:12
 
 DOCKER_RUN=docker run --rm \
@@ -9,7 +9,7 @@ DOCKER_RUN=docker run --rm \
 buildApplication:
 	$(DOCKER_RUN) $(IMAGE) yarn install
 	$(DOCKER_RUN) $(IMAGE) yarn build
-	docker build --tag="$(SERVICE):$(REVISION_ID)" --tag="$(SERVICE):latest" .
+	docker build --tag="$(SERVICE):$(VERSION)" --tag="$(SERVICE):latest" .
 
 runApplication:
 	docker-compose up
@@ -18,9 +18,9 @@ stop:
 	docker-compose down
 
 clean:
-	docker rmi -f $(SERVICE):$(REVISION_ID) $(SERVICE):latest
+	docker rmi -f $(SERVICE):$(VERSION) $(SERVICE):latest
 
-rebuild:
+rebuildApplication:
 	docker-compose down
 	$(DOCKER_RUN) $(IMAGE) yarn install
 	$(DOCKER_RUN) $(IMAGE) yarn build

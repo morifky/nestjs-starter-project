@@ -3,10 +3,10 @@
 A simple nestjs starter project, including integration with openAPI Swagger and postgres database
 
 ## Prerequisites
-* Docker with support for Linux containers
+* Docker
 * GNU Make
 
-## Environment variables (mandatory)
+## Environment variables
 * PORT
 
     Port the service listen on (e.g: 8080)

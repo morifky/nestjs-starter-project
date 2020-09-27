@@ -25,7 +25,7 @@ class ConfigService {
   }
 
   public getBuildInformation() {
-    return this.getValue('REVISION_ID', true)
+    return this.getValue('VERSION', true)
   }
 
 
@@ -53,7 +53,7 @@ const configService = new ConfigService(process.env)
     'DB_NAME',
     'PORT',
     'MIGRATION_AUTO',
-    'REVISION_ID'
+    'VERSION'
   ]);
 
 export { configService };
