@@ -3,8 +3,8 @@ services:
   web:
     image: node:12
     volumes:
-      - ${PWD:-./}:/workspace/nestjs-starter-project
-    working_dir: /workspace/nestjs-starter-project
+      - ${PWD:-./}:/workdir/nestjs-starter-project
+    working_dir: /workdir/nestjs-starter-project
     command: bash -c "yarn start"
     depends_on:
       - postgres

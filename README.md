@@ -8,12 +8,10 @@ A simple nestjs starter project, including integration with openAPI Swagger and 
 
 ## Environment variables
 * PORT
+    service HTTP port
 
-    Port the service listen on (e.g: 8080)
-
-* REVISION_ID
-
-    Image build ID (e.g current timestamp or version number)
+* VERSION
+    Image version
 
 * DB_HOST
     Database host
