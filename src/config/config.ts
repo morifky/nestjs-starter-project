@@ -3,8 +3,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 require('dotenv').config();
 
 class ConfigService {
-
-  constructor(private env: { [k: string]: string | undefined }) { }
+  constructor(private env: { [k: string]: string | undefined }) {}
 
   private getValue(key: string, throwOnMissing = true): string {
     const value = this.env[key];
@@ -16,7 +15,7 @@ class ConfigService {
   }
 
   public ensureValues(keys: string[]) {
-    keys.forEach(k => this.getValue(k, true));
+    keys.forEach((k) => this.getValue(k, true));
     return this;
   }
 
@@ -25,9 +24,16 @@ class ConfigService {
   }
 
   public getBuildInformation() {
-    return this.getValue('VERSION', true)
+    return this.getValue('VERSION', true);
   }
 
+  public getJwtSecret() {
+    return this.getValue('JWT_SECRET', true);
+  }
+
+  public getJwtRefreshSecret() {
+    return this.getValue('JWT_REFRESH_SECRET', true);
+  }
 
   public getTypeOrmConfig(): TypeOrmModuleOptions {
     return {
@@ -38,22 +44,22 @@ class ConfigService {
       password: this.getValue('DB_PASSWORD'),
       database: this.getValue('DB_NAME'),
       entities: ['dist/**/*.entity{.ts,.js}'],
-      synchronize: (this.getValue('MIGRATION_AUTO') == 'true')
+      synchronize: this.getValue('MIGRATION_AUTO') == 'true',
     };
   }
-
 }
 
-const configService = new ConfigService(process.env)
-  .ensureValues([
-    'DB_HOST',
-    'DB_PORT',
-    'DB_USERNAME',
-    'DB_PASSWORD',
-    'DB_NAME',
-    'PORT',
-    'MIGRATION_AUTO',
-    'VERSION'
-  ]);
+const configService = new ConfigService(process.env).ensureValues([
+  'DB_HOST',
+  'DB_PORT',
+  'DB_USERNAME',
+  'DB_PASSWORD',
+  'DB_NAME',
+  'PORT',
+  'MIGRATION_AUTO',
+  'VERSION',
+  'JWT_SECRET',
+  'JWT_REFRESH_SECRET',
+]);
 
 export { configService };

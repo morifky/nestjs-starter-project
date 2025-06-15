@@ -1,7 +1,6 @@
-version: "3"
 services:
   web:
-    image: node:12
+    image: node:22.16.0
     volumes:
       - ${PWD:-./}:/workdir/nestjs-starter-project
     working_dir: /workdir/nestjs-starter-project
@@ -17,12 +16,14 @@ services:
       - DB_NAME=product
       - DB_PORT=5432
       - PORT=8080
-      - REVISION_ID=0.0.1
+      - VERSION=${VERSION}
       - MIGRATION_AUTO=true
+      - JWT_SECRET=mysupersecret
+      - JWT_REFRESH_SECRET=myrefreshsecret 
     ports:
       - "8080:8080"
   postgres:
-    image: postgres:9.6-alpine
+    image: postgres:17.5-alpine3.22
     networks:
       - resource-network
     ports:
@@ -36,7 +37,7 @@ services:
     volumes:
       - my-db:/var/lib/postgresql/data
 networks:
-    resource-network:
-      driver: bridge
+  resource-network:
+    driver: bridge
 volumes:
   my-db:

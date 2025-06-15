@@ -8,18 +8,18 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class Product {
+export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ length: 500 })
-  name: string;
+  @Column({ unique: true })
+  email: string;
 
-  @Column('int')
-  price: number;
+  @Column()
+  password: string;
 
-  @Column('text')
-  description: string;
+  @Column({ nullable: true })
+  refreshToken: string;
 
   @CreateDateColumn()
   created_at: Timestamp;

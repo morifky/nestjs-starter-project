@@ -1,6 +1,6 @@
 SERVICE_NAME=nestjs-starter-pack
-VERSION?=unknown
-IMAGE=node:12
+VERSION=$(shell cat version.json | jq -r .version)
+IMAGE=node:22.16.0
 
 DOCKER_RUN=docker run --rm \
 	-v $(CURDIR):/workdir/$(SERVICE_NAME) \
@@ -12,7 +12,11 @@ buildApplication:
 	docker build --tag="$(SERVICE_NAME):$(VERSION)" --tag="$(SERVICE_NAME):latest" .
 
 runApplication:
-	docker-compose up
+
+	VERSION=$(VERSION) docker-compose up
+
+testApp:
+	$(DOCKER_RUN) $(IMAGE) yarn test
 
 stop:
 	docker-compose down
