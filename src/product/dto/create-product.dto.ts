@@ -1,7 +1,8 @@
+import { BaseDto } from '@/base/dto/base.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
 
-export class createProductDto {
+export class createProductDto extends BaseDto {
   @ApiProperty()
   @IsNotEmpty()
   readonly name: string;

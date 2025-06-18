@@ -1,9 +1,8 @@
+import { Product } from '@/models/product.entity';
 import { Test, TestingModule } from '@nestjs/testing';
+import { createProductDto } from './dto/create-product.dto';
 import { ProductController } from './product.controller';
 import { ProductService } from './product.service';
-import { createProductDto } from './dto/create-product.dto';
-import { Product } from '../models/product.entity';
-import { Timestamp } from 'typeorm';
 
 describe('ProductController', () => {
   let controller: ProductController;
@@ -41,8 +40,8 @@ describe('ProductController', () => {
   });
 
   describe('findAll', () => {
-    it('should return an array of products', async () => {
-      const result: Product[] = [
+    it('should return paginated products', async () => {
+      const products = [
         {
           id: '1',
           name: 'Test Product',
@@ -52,10 +51,30 @@ describe('ProductController', () => {
           updated_at: null,
         },
       ];
-      jest.spyOn(service, 'findAll').mockResolvedValue(result);
 
-      expect(await controller.findAll()).toBe(result);
-      expect(service.findAll).toHaveBeenCalled();
+      const paginatedResult = {
+        items: products,
+        meta: {
+          totalItems: 1,
+          itemCount: 1,
+          itemsPerPage: 10,
+          totalPages: 1,
+          currentPage: 1,
+        },
+      };
+
+      jest.spyOn(service, 'findAll').mockResolvedValue(paginatedResult);
+
+      const paginationDto = { page: 1, limit: 10 };
+      const filterOptions = {};
+
+      const result = await controller.findAll(paginationDto, filterOptions);
+
+      expect(result).toBe(paginatedResult);
+      expect(service.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ page: 1, limit: 10 }),
+        {},
+      );
     });
   });
 
@@ -83,10 +102,21 @@ describe('ProductController', () => {
         price: 150,
         description: 'New Description',
       };
-      
-      jest.spyOn(service, 'create').mockImplementation();
 
-      await controller.create(createDto);
+      const createdProduct = {
+        id: '1',
+        ...createDto,
+        created_at: null,
+        updated_at: null,
+      };
+
+      jest
+        .spyOn(service, 'create')
+        .mockResolvedValue(createdProduct as Product);
+
+      const result = await controller.create(createDto);
+
+      expect(result).toBe(createdProduct);
       expect(service.create).toHaveBeenCalledWith(createDto);
     });
   });
@@ -98,17 +128,28 @@ describe('ProductController', () => {
         price: 200,
         description: 'Updated Description',
       };
-      
-      jest.spyOn(service, 'update').mockImplementation();
 
-      await controller.update('1', updateDto);
+      const updatedProduct = {
+        id: '1',
+        ...updateDto,
+        created_at: null,
+        updated_at: null,
+      };
+
+      jest
+        .spyOn(service, 'update')
+        .mockResolvedValue(updatedProduct as Product);
+
+      const result = await controller.update('1', updateDto);
+
+      expect(result).toBe(updatedProduct);
       expect(service.update).toHaveBeenCalledWith('1', updateDto);
     });
   });
 
   describe('remove', () => {
     it('should remove a product', async () => {
-      jest.spyOn(service, 'remove').mockImplementation();
+      jest.spyOn(service, 'remove').mockResolvedValue(undefined);
 
       await controller.remove('1');
       expect(service.remove).toHaveBeenCalledWith('1');

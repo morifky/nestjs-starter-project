@@ -1,8 +1,8 @@
+import { Product } from '@/models/product.entity';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProductService } from './product.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Product } from '../models/product.entity';
-import { Repository, Timestamp } from 'typeorm';
+import { Repository } from 'typeorm';
+import { ProductService } from './product.service';
 
 describe('ProductService', () => {
   let service: ProductService;
@@ -10,10 +10,12 @@ describe('ProductService', () => {
 
   const mockProductRepository = {
     find: jest.fn(),
-    findOneOrFail: jest.fn(),
-    insert: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
+    findOne: jest.fn(),
+    findAndCount: jest.fn(),
+    create: jest.fn(),
+    merge: jest.fn(),
+    save: jest.fn(),
+    remove: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -40,7 +42,7 @@ describe('ProductService', () => {
   });
 
   describe('findAll', () => {
-    it('should return an array of products', async () => {
+    it('should return paginated products', async () => {
       const products = [
         {
           id: '1',
@@ -51,11 +53,30 @@ describe('ProductService', () => {
           updated_at: null,
         },
       ];
-      jest.spyOn(repo, 'find').mockResolvedValue(products);
 
-      const result = await service.findAll();
-      expect(result).toEqual(products);
-      expect(repo.find).toHaveBeenCalled();
+      const paginationDto = { page: 1, limit: 10 };
+
+      jest.spyOn(repo, 'findAndCount').mockResolvedValue([products, 1]);
+
+      const result = await service.findAll(paginationDto);
+
+      expect(result).toEqual({
+        items: products,
+        meta: {
+          totalItems: 1,
+          itemCount: 1,
+          itemsPerPage: 10,
+          totalPages: 1,
+          currentPage: 1,
+        },
+      });
+
+      expect(repo.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          take: 10,
+          skip: 0,
+        }),
+      );
     });
   });
 
@@ -69,11 +90,15 @@ describe('ProductService', () => {
         created_at: null,
         updated_at: null,
       };
-      jest.spyOn(repo, 'findOneOrFail').mockResolvedValue(product);
+
+      jest.spyOn(repo, 'findOne').mockResolvedValue(product);
 
       const result = await service.findOne('1');
       expect(result).toEqual(product);
-      expect(repo.findOneOrFail).toHaveBeenCalledWith({ where: { id: '1' } });
+      expect(repo.findOne).toHaveBeenCalledWith({
+        where: { id: '1' },
+        relations: undefined,
+      });
     });
   });
 
@@ -85,10 +110,21 @@ describe('ProductService', () => {
         description: 'New Description',
       };
 
-      jest.spyOn(repo, 'insert').mockResolvedValue(undefined);
+      const createdProduct = {
+        id: '1',
+        ...createProductDto,
+        created_at: null,
+        updated_at: null,
+      };
 
-      await service.create(createProductDto);
-      expect(repo.insert).toHaveBeenCalledWith(createProductDto);
+      jest.spyOn(repo, 'create').mockReturnValue(createdProduct as any);
+      jest.spyOn(repo, 'save').mockResolvedValue(createdProduct as any);
+
+      const result = await service.create(createProductDto);
+
+      expect(result).toEqual(createdProduct);
+      expect(repo.create).toHaveBeenCalledWith(createProductDto);
+      expect(repo.save).toHaveBeenCalledWith(createdProduct);
     });
   });
 
@@ -100,19 +136,60 @@ describe('ProductService', () => {
         description: 'Updated Description',
       };
 
-      jest.spyOn(repo, 'update').mockResolvedValue(undefined);
+      const existingProduct = {
+        id: '1',
+        name: 'Old Product',
+        price: 100,
+        description: 'Old Description',
+        created_at: null,
+        updated_at: null,
+      };
 
-      await service.update('1', updateProductDto);
-      expect(repo.update).toHaveBeenCalledWith('1', updateProductDto);
+      const updatedProduct = {
+        ...existingProduct,
+        ...updateProductDto,
+      };
+
+      jest.spyOn(repo, 'findOne').mockResolvedValue(existingProduct as any);
+      jest.spyOn(repo, 'merge').mockReturnValue(updatedProduct as any);
+      jest.spyOn(repo, 'save').mockResolvedValue(updatedProduct as any);
+
+      const result = await service.update('1', updateProductDto);
+
+      expect(result).toEqual(updatedProduct);
+      expect(repo.findOne).toHaveBeenCalledWith({
+        where: { id: '1' },
+        relations: undefined,
+      });
+      expect(repo.merge).toHaveBeenCalledWith(
+        existingProduct,
+        updateProductDto,
+      );
+      expect(repo.save).toHaveBeenCalledWith(updatedProduct);
     });
   });
 
   describe('remove', () => {
     it('should remove a product', async () => {
-      jest.spyOn(repo, 'delete').mockResolvedValue(undefined);
+      const product = {
+        id: '1',
+        name: 'Test Product',
+        price: 100,
+        description: 'Test Description',
+        created_at: null,
+        updated_at: null,
+      };
+
+      jest.spyOn(repo, 'findOne').mockResolvedValue(product as any);
+      jest.spyOn(repo, 'remove').mockResolvedValue(undefined);
 
       await service.remove('1');
-      expect(repo.delete).toHaveBeenCalledWith('1');
+
+      expect(repo.findOne).toHaveBeenCalledWith({
+        where: { id: '1' },
+        relations: undefined,
+      });
+      expect(repo.remove).toHaveBeenCalledWith(product);
     });
   });
 });

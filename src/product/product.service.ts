@@ -1,33 +1,18 @@
+import { Product } from '@/models/product.entity';
 import { Injectable } from '@nestjs/common';
-import { Product } from '../models/product.entity';
-import { Repository } from 'typeorm';
-import { IProduct } from 'src/common/interfaces/product';
 import { InjectRepository } from '@nestjs/typeorm';
-
+import { Repository } from 'typeorm';
+import { createProductDto } from './dto/create-product.dto';
+import { BaseRepositoryService } from '@/base/services/base-repository.service';
 @Injectable()
-export class ProductService {
+export class ProductService extends BaseRepositoryService<
+  Product,
+  createProductDto
+> {
   constructor(
     @InjectRepository(Product)
-    private readonly itemRepository: Repository<Product>,
-  ) {}
-
-  findAll(): Promise<Product[]> {
-    return this.itemRepository.find();
-  }
-
-  create(product: IProduct) {
-    this.itemRepository.insert(product);
-  }
-
-  findOne(id: string): Promise<Product> {
-    return this.itemRepository.findOneOrFail({ where: { id: id } });
-  }
-
-  update(id: string, product: IProduct) {
-    this.itemRepository.update(id, product);
-  }
-
-  remove(id: string) {
-    this.itemRepository.delete(id);
+    private readonly productRepository: Repository<Product>,
+  ) {
+    super(productRepository);
   }
 }
