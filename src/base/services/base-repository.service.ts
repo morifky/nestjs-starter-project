@@ -53,10 +53,7 @@ export abstract class BaseRepositoryService<
       }
     }
 
-    // Get paginated results
     const [items, totalItems] = await this.repository.findAndCount(findOptions);
-
-    // Calculate pagination metadata
     const totalPages = Math.ceil(totalItems / limit);
 
     return {

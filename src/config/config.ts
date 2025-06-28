@@ -35,6 +35,14 @@ class ConfigService {
     return this.getValue('JWT_REFRESH_SECRET', true);
   }
 
+  public getOTLPEndpoint() {
+    return this.getValue('OTEL_EXPORTER_OTLP_ENDPOINT', true);
+  }
+
+  public getNodeEnv() {
+    return this.getValue('NODE_ENV', true);
+  }
+
   public getTypeOrmConfig(): TypeOrmModuleOptions {
     return {
       type: 'postgres',
@@ -60,6 +68,8 @@ const configService = new ConfigService(process.env).ensureValues([
   'VERSION',
   'JWT_SECRET',
   'JWT_REFRESH_SECRET',
+  'OTEL_EXPORTER_OTLP_ENDPOINT',
+  'NODE_ENV',
 ]);
 
 export { configService };

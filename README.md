@@ -1,6 +1,20 @@
-## Description
+# NestJS Starter Project
 
-A simple nestjs starter project, including integration with openAPI Swagger, auth system, and postgres database
+A comprehensive NestJS starter project with full observability stack including OpenTelemetry, Prometheus, Grafana, Loki, and Tempo.
+
+## Features
+
+- **NestJS Framework** with TypeScript
+- **OpenAPI Swagger** documentation
+- **Authentication System** with JWT
+- **PostgreSQL Database** with TypeORM
+- **Complete Observability Stack**:
+  - **OpenTelemetry** for metrics and tracing
+  - **Prometheus** for metrics collection
+  - **Grafana** for visualization
+  - **Loki** for log aggregation
+  - **Tempo** for distributed tracing
+  - **Promtail** for log shipping
 
 ## Prerequisites
 

@@ -11,9 +11,11 @@ buildApplication:
 	$(DOCKER_RUN) $(IMAGE) yarn build
 	docker build --tag="$(SERVICE_NAME):$(VERSION)" --tag="$(SERVICE_NAME):latest" .
 
-runApplication:
+setupHostDirs:
+	./setup-host-dirs.sh
 
-	VERSION=$(VERSION) docker-compose up
+runApplication: setupHostDirs
+	VERSION=$(VERSION) docker-compose up -d
 
 testApp:
 	$(DOCKER_RUN) $(IMAGE) yarn test

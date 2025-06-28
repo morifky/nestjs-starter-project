@@ -1,16 +1,20 @@
+import '@/common/opentelemetry/otel';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { configService } from './config/config';
-import { Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
+import { Logger } from 'nestjs-pino';
 
 async function bootstrap() {
   const port = configService.getPort();
   const buildInformation = configService.getBuildInformation();
-  const logger = new Logger('NEST APP');
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+    logger: false,
+  });
 
+  app.useLogger(app.get(Logger));
   app.use(cookieParser());
 
   app.setGlobalPrefix('api');
@@ -24,6 +28,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('/apidocs', app, document);
   await app.listen(port);
-  logger.debug(`NEST APP version:${buildInformation}`);
+  app.get(Logger).debug(`NEST APP version:${buildInformation}`);
 }
 bootstrap();

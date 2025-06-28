@@ -1,12 +1,17 @@
 services:
   web:
     image: node:22.16.0
+    container_name: web
     volumes:
       - ${PWD:-./}:/workdir/nestjs-starter-project
+      - ./observability/app-logs:/var/log/app
     working_dir: /workdir/nestjs-starter-project
     command: bash -c "yarn start"
     depends_on:
       - postgres
+      - loki
+      - otel-collector
+      - tempo
     networks:
       - resource-network
     environment:
@@ -19,11 +24,19 @@ services:
       - VERSION=${VERSION}
       - MIGRATION_AUTO=true
       - JWT_SECRET=mysupersecret
-      - JWT_REFRESH_SECRET=myrefreshsecret 
+      - JWT_REFRESH_SECRET=myrefreshsecret
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - NODE_ENV=development
     ports:
       - "8080:8080"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
   postgres:
     image: postgres:17.5-alpine3.22
+    container_name: postgres
     networks:
       - resource-network
     ports:
@@ -36,8 +49,92 @@ services:
       - POSTGRES_DB=product
     volumes:
       - my-db:/var/lib/postgresql/data
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    networks:
+      - resource-network
+    volumes:
+      - ./observability/config/loki-config.yaml:/etc/loki/local-config.yaml
+      - ./observability/loki-data/wal:/wal
+      - ./observability/loki-data/compactor:/loki
+  tempo:
+    image: grafana/tempo:2.8.1
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./observability/config/tempo.yaml:/etc/tempo.yaml
+      - ./observability/tempo-data:/tmp/tempo/wal
+    ports:
+      - "3200:3200"
+    networks:
+      - resource-network
+  promtail:
+    image: grafana/promtail:2.9.2
+    container_name: promtail
+    volumes:
+      - /var/log:/var/log
+      - ./observability:/var/log/observability
+      - ./observability/config/promtail-config.yaml:/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - resource-network
+    depends_on:
+      - loki
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.93.0
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./observability/config/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8888:8888"   # metrics
+      - "8889:8889"   # Prometheus exporter metrics
+    networks:
+      - resource-network
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - resource-network
+    volumes:
+      - ./observability/config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    depends_on:
+      - otel-collector
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - resource-network
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - loki
+      - otel-collector
+      - prometheus
+    volumes:
+      - grafana-data:/var/lib/grafana
 networks:
   resource-network:
     driver: bridge
 volumes:
   my-db:
+  grafana-data:
+  prometheus-data:

@@ -1,0 +1,21 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: otelcol
+  otlphttp:
+    endpoint: http://tempo:3200/api/traces
+    tls:
+      insecure: true
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlphttp]
+    metrics:
+      receivers: [otlp]
+      exporters: [prometheus]

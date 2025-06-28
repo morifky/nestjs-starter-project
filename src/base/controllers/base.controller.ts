@@ -21,40 +21,37 @@ export abstract class BaseController<T extends BaseEntity, D extends BaseDto> {
   @Get()
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  findAll(
+  async findAll(
     @Query() paginationDto: PaginationDto,
-    @Query() filterOptions?: any,
+    @Query() filterOptions: any,
   ): Promise<PaginationResult<T>> {
-    // Extract pagination parameters
     const { page, limit, ...filters } = filterOptions || {};
-
-    // Create pagination DTO
     const pagination = new PaginationDto();
     pagination.page = page ? parseInt(page) : 1;
     pagination.limit = limit ? parseInt(limit) : 10;
 
-    return this.service.findAll(pagination, filters);
+    return await this.service.findAll(pagination, filters);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<T> {
-    return this.service.findOne(id);
+  async findOne(@Param('id') id: string): Promise<T> {
+    return await this.service.findOne(id);
   }
 
   @Post()
-  create(@Body() createDto: D): Promise<T> {
-    return this.service.create(createDto);
+  async create(@Body() createDto: D): Promise<T> {
+    return await this.service.create(createDto);
   }
 
   @Put(':id')
   @HttpCode(204)
-  update(@Param('id') id: string, @Body() updateDto: D): Promise<T> {
-    return this.service.update(id, updateDto);
+  async update(@Param('id') id: string, @Body() updateDto: D): Promise<T> {
+    return await this.service.update(id, updateDto);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  remove(@Param('id') id: string): Promise<void> {
-    return this.service.remove(id);
+  async remove(@Param('id') id: string): Promise<void> {
+    await this.service.remove(id);
   }
 }
