@@ -13,6 +13,7 @@ scrape_configs:
         labels:
           job: web-app
           __path__: /var/log/observability/app-logs/*.log
+
   - job_name: system-logs
     static_configs:
       - targets:
@@ -20,3 +21,11 @@ scrape_configs:
         labels:
           job: system
           __path__: /var/log/*.log 
+
+  - job_name: containerlogs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: containerlogs
+          __path__: /var/lib/docker/containers/*/*log

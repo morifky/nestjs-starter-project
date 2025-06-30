@@ -1,27 +1,25 @@
+import { configService } from '@/config/config';
 import { Injectable } from '@nestjs/common';
-import {
-  metrics,
-  Counter,
-  Histogram,
-  ObservableGauge,
-} from '@opentelemetry/api';
+import { metrics } from '@opentelemetry/api';
 
 @Injectable()
 export class MetricsService {
-  private readonly httpRequestsTotal: Counter;
-  private readonly httpRequestDuration: Histogram;
-  private readonly activeConnections: ObservableGauge;
-  private readonly memoryUsage: ObservableGauge;
+  private readonly httpRequestsTotal;
+  private readonly httpRequestDuration;
+  private readonly activeConnections;
+  private readonly memoryUsage;
+  private readonly testCounter;
 
   constructor() {
-    const meter = metrics.getMeter('nestjs-app');
+    const meter = metrics.getMeter(
+      configService.getServiceName(),
+      configService.getAppVersion() || 'unknown',
+    );
 
-    // HTTP request counter
     this.httpRequestsTotal = meter.createCounter('http_requests_total', {
       description: 'Total number of HTTP requests',
     });
 
-    // HTTP request duration histogram
     this.httpRequestDuration = meter.createHistogram(
       'http_request_duration_seconds',
       {
@@ -30,30 +28,23 @@ export class MetricsService {
       },
     );
 
-    // Active connections gauge
     this.activeConnections = meter.createObservableGauge('active_connections', {
       description: 'Number of active connections',
     });
+    this.activeConnections.addCallback((observableResult) => {
+      observableResult.observe(0);
+    });
 
-    // Memory usage gauge
     this.memoryUsage = meter.createObservableGauge('memory_usage_bytes', {
       description: 'Memory usage in bytes',
       unit: 'bytes',
     });
-
-    // Register observable callbacks
-    this.activeConnections.addCallback((result) => {
-      // For now, we'll set a default value
-      // In a real app, you might track actual connections
-      result.observe(0, {});
-    });
-
-    this.memoryUsage.addCallback((result) => {
+    this.memoryUsage.addCallback((observableResult) => {
       const memUsage = process.memoryUsage();
-      result.observe(memUsage.rss, { type: 'rss' });
-      result.observe(memUsage.heapUsed, { type: 'heap_used' });
-      result.observe(memUsage.heapTotal, { type: 'heap_total' });
-      result.observe(memUsage.external, { type: 'external' });
+      observableResult.observe(memUsage.rss, { type: 'rss' });
+      observableResult.observe(memUsage.heapUsed, { type: 'heap_used' });
+      observableResult.observe(memUsage.heapTotal, { type: 'heap_total' });
+      observableResult.observe(memUsage.external, { type: 'external' });
     });
   }
 
@@ -73,10 +64,6 @@ export class MetricsService {
   }
 
   setActiveConnections(count: number) {
-    // For ObservableGauge, we need to update the callback
-    // This is a simplified approach - in practice you might want to use a different pattern
-    this.activeConnections.addCallback((result) => {
-      result.observe(count, {});
-    });
+    // Not needed for ObservableGauge in 2.x, handled by callback
   }
 }

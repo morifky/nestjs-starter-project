@@ -32,3 +32,17 @@ $ make buildApplication
 ```bash
 $ make runApplication
 ```
+
+## Observability
+
+1. Login to http://localhost:3000 (default username/pass: admin/admin)
+2. Setup Loki, Prometheus, and Tempo data source
+3. Sample
+
+- Trace
+  ![screenshot](docs/tempo.png)
+
+- Logs
+  ![screenshot](docs/loki.png)
+- Metrics
+  ![screenshot](docs/prometheus.png)

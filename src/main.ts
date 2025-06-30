@@ -13,7 +13,6 @@ async function bootstrap() {
     bufferLogs: true,
     logger: false,
   });
-
   app.useLogger(app.get(Logger));
   app.use(cookieParser());
 

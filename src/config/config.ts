@@ -43,6 +43,14 @@ class ConfigService {
     return this.getValue('NODE_ENV', true);
   }
 
+  public getServiceName() {
+    return this.getValue('SERVICE_NAME', true);
+  }
+
+  public getAppVersion() {
+    return this.getValue('VERSION', false);
+  }
+
   public getTypeOrmConfig(): TypeOrmModuleOptions {
     return {
       type: 'postgres',
@@ -70,6 +78,7 @@ const configService = new ConfigService(process.env).ensureValues([
   'JWT_REFRESH_SECRET',
   'OTEL_EXPORTER_OTLP_ENDPOINT',
   'NODE_ENV',
+  'SERVICE_NAME',
 ]);
 
 export { configService };

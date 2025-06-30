@@ -1,7 +1,7 @@
 services:
-  web:
+  webapp:
     image: node:22.16.0
-    container_name: web
+    container_name: webapp
     volumes:
       - ${PWD:-./}:/workdir/nestjs-starter-project
       - ./observability/app-logs:/var/log/app
@@ -27,6 +27,7 @@ services:
       - JWT_REFRESH_SECRET=myrefreshsecret
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - NODE_ENV=development
+      - SERVICE_NAME=webapp
     ports:
       - "8080:8080"
     logging:
@@ -69,7 +70,10 @@ services:
       - ./observability/config/tempo.yaml:/etc/tempo.yaml
       - ./observability/tempo-data:/tmp/tempo/wal
     ports:
-      - "3200:3200"
+      - "3200"
+      - "4317" 
+      - "4318"
+
     networks:
       - resource-network
   promtail:
@@ -77,6 +81,7 @@ services:
     container_name: promtail
     volumes:
       - /var/log:/var/log
+      - /var/lib/docker/containers:/var/lib/docker/containers
       - ./observability:/var/log/observability
       - ./observability/config/promtail-config.yaml:/etc/promtail/config.yaml
     command: -config.file=/etc/promtail/config.yaml

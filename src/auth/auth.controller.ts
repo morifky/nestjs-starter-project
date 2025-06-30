@@ -8,10 +8,10 @@ import {
   Get,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { Response } from 'express';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { LoginDto } from './login.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -21,9 +21,13 @@ export class AuthController {
   @ApiOperation({ summary: 'User login' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Req() req, @Res({ passthrough: true }) res: Response) {
+  @ApiBody({ type: LoginDto })
+  async login(
+    @Body() loginDto: LoginDto,
+    @Req() req,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const tokens = await this.authService.login(req.user);
     res.cookie('refresh_token', tokens.refreshToken, {
       httpOnly: true,

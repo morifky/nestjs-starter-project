@@ -8,7 +8,7 @@ import {
   HttpCode,
   Query,
 } from '@nestjs/common';
-import { ApiQuery } from '@nestjs/swagger';
+import { ApiQuery, ApiBody } from '@nestjs/swagger';
 import { BaseRepositoryService } from '../services/base-repository.service';
 import { BaseEntity } from '../interfaces/base-entity.interface';
 import { BaseDto } from '../interfaces/base-dto.interface';
@@ -39,12 +39,14 @@ export abstract class BaseController<T extends BaseEntity, D extends BaseDto> {
   }
 
   @Post()
+  @ApiBody({ type: Object })
   async create(@Body() createDto: D): Promise<T> {
     return await this.service.create(createDto);
   }
 
   @Put(':id')
   @HttpCode(204)
+  @ApiBody({ type: Object })
   async update(@Param('id') id: string, @Body() updateDto: D): Promise<T> {
     return await this.service.update(id, updateDto);
   }

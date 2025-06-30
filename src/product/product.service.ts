@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createProductDto } from './dto/create-product.dto';
 import { BaseRepositoryService } from '@/base/services/base-repository.service';
+
 @Injectable()
 export class ProductService extends BaseRepositoryService<
   Product,

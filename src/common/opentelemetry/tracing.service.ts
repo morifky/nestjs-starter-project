@@ -1,3 +1,4 @@
+import { configService } from '@/config/config';
 import { Injectable } from '@nestjs/common';
 import {
   context,
@@ -13,7 +14,10 @@ export class TracingService {
   private readonly tracer: Tracer;
 
   constructor() {
-    this.tracer = trace.getTracer('nestjs-app');
+    this.tracer = trace.getTracer(
+      configService.getServiceName(),
+      configService.getAppVersion() || 'unknown',
+    );
   }
 
   startSpan<T>(name: string, options?: SpanOptions): Span;
