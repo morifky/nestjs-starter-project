@@ -7,17 +7,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../models/user.entity';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
-import { configService } from '../config/config';
 
 @Module({
-  imports: [
-    PassportModule,
-    JwtModule.register({
-      secret: configService.getJwtSecret(),
-      signOptions: { expiresIn: '1h' },
-    }),
-    TypeOrmModule.forFeature([User]),
-  ],
+  imports: [PassportModule, JwtModule, TypeOrmModule.forFeature([User])],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtRefreshStrategy],
   exports: [AuthService],

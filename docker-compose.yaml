@@ -4,7 +4,7 @@ services:
     container_name: webapp
     volumes:
       - ${PWD:-./}:/workdir/nestjs-starter-project
-      - ./observability/app-logs:/var/log/app
+      - app-logs:/app-logs
     working_dir: /workdir/nestjs-starter-project
     command: bash -c "yarn start"
     depends_on:
@@ -28,6 +28,8 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - NODE_ENV=development
       - SERVICE_NAME=webapp
+      - LOG_LEVEL=info
+      - LOG_PATH=/app-logs/app.log
     ports:
       - "8080:8080"
     logging:
@@ -35,6 +37,7 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
   postgres:
     image: postgres:17.5-alpine3.22
     container_name: postgres
@@ -84,6 +87,7 @@ services:
       - /var/lib/docker/containers:/var/lib/docker/containers
       - ./observability:/var/log/observability
       - ./observability/config/promtail-config.yaml:/etc/promtail/config.yaml
+      - app-logs:/app-logs
     command: -config.file=/etc/promtail/config.yaml
     networks:
       - resource-network
@@ -143,3 +147,4 @@ volumes:
   my-db:
   grafana-data:
   prometheus-data:
+  app-logs:

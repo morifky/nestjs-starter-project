@@ -1,5 +1,5 @@
-import { configService } from '@/config/config';
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   context,
   trace,
@@ -13,10 +13,10 @@ import {
 export class TracingService {
   private readonly tracer: Tracer;
 
-  constructor() {
+  constructor(private configService: ConfigService) {
     this.tracer = trace.getTracer(
-      configService.getServiceName(),
-      configService.getAppVersion() || 'unknown',
+      configService.get('SERVICE_NAME'),
+      configService.get('VERSION') || 'unknown',
     );
   }
 

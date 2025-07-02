@@ -6,15 +6,17 @@ DOCKER_RUN=docker run --rm \
 	-v $(CURDIR):/workdir/$(SERVICE_NAME) \
 	-w /workdir/$(SERVICE_NAME)
 
-buildApplication:
+installDeps:
 	$(DOCKER_RUN) $(IMAGE) yarn install
+
+buildApplication: installDeps
 	$(DOCKER_RUN) $(IMAGE) yarn build
 	docker build --tag="$(SERVICE_NAME):$(VERSION)" --tag="$(SERVICE_NAME):latest" .
 
 setupHostDirs:
 	./setup-host-dirs.sh
 
-runApplication: setupHostDirs
+runApplication: setupHostDirs installDeps
 	VERSION=$(VERSION) docker-compose up -d
 
 testApp:

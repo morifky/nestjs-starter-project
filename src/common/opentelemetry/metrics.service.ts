@@ -1,6 +1,6 @@
-import { configService } from '@/config/config';
 import { Injectable } from '@nestjs/common';
 import { metrics } from '@opentelemetry/api';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MetricsService {
@@ -10,10 +10,10 @@ export class MetricsService {
   private readonly memoryUsage;
   private readonly testCounter;
 
-  constructor() {
+  constructor(private configService: ConfigService) {
     const meter = metrics.getMeter(
-      configService.getServiceName(),
-      configService.getAppVersion() || 'unknown',
+      configService.get('SERVICE_NAME'),
+      configService.get('VERSION') || 'unknown',
     );
 
     this.httpRequestsTotal = meter.createCounter('http_requests_total', {
@@ -61,9 +61,5 @@ export class MetricsService {
       method,
       route,
     });
-  }
-
-  setActiveConnections(count: number) {
-    // Not needed for ObservableGauge in 2.x, handled by callback
   }
 }

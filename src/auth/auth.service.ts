@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../models/user.entity';
 import * as bcrypt from 'bcrypt';
-import { configService } from '../config/config';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -12,13 +12,14 @@ export class AuthService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersRepository.findOne({ where: { email } });
     if (user && (await bcrypt.compare(pass, user.password))) {
-      const { password, ...result } = user;
-      return result;
+      delete user.password;
+      return user;
     }
     return null;
   }
@@ -27,7 +28,7 @@ export class AuthService {
     const payload = { email: user.email, sub: user.id };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, {
-      secret: configService.getJwtRefreshSecret(),
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       expiresIn: '7d',
     });
 
