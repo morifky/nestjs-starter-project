@@ -27,8 +27,8 @@ jobs:
           node-version: '22'
           cache: 'yarn'
 
-      - name: Install dependencies
-        run: make installDeps
+      - name: Build App
+        run: make buildApplication
 
       - name: Run tests
         run: make testApp
