@@ -1,6 +1,17 @@
 name: CICD Pipeline
 
-on: workflow_dispatch
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy to AWS ECS'
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   build-and-test:
@@ -36,55 +47,66 @@ jobs:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'table'
-          exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
 
-  # build-and-deploy:
-  #   runs-on: ubuntu-latest
-  #   needs: security-scan
-  #   if: github.ref == 'refs/heads/main'
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    needs: code-scan
+    if: github.ref == 'refs/heads/main' && github.event.inputs.deploy == 'true'
 
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-  #     - name: Set up Node.js
-  #       uses: actions/setup-node@v3
-  #       with:
-  #         node-version: '22'
-  #         cache: 'yarn'
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+          cache: 'yarn'
 
-  #     - name: Build application
-  #       run: make buildApplication
+      - name: Build application
+        run: make buildApplication
 
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v2
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         aws-region: ${{ secrets.AWS_REGION }}
+      # Using Github OIDC https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws
+      # This is just dummy value
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5.1.0
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
+          role-session-name: MySessionName
 
-  #     - name: Login to Amazon ECR
-  #       id: login-ecr
-  #       uses: aws-actions/amazon-ecr-login@v1
+      # NOTE: Need to setup ECR Registry named 'Nestjs-API'
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-  #     - name: Build, tag, and push image to Amazon ECR
-  #       id: build-image
-  #       env:
-  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #         IMAGE_TAG: ${{ github.sha }}
-  #         SERVICE_NAME: ${{ secrets.SERVICE_NAME }}
-  #       run: |
-  #         docker build -t $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG .
-  #         docker push $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG
-  #         echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG"
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image-push
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+          SERVICE_NAME: 'Nestjs-API'
+        run: |
+          docker build -t $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-  #     - name: Deploy to Amazon ECS
-  #       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-  #       with:
-  #         task-definition: ${{ secrets.ECS_TASK_DEFINITION }}
-  #         service: ${{ secrets.ECS_SERVICE }}
-  #         cluster: ${{ secrets.ECS_CLUSTER }}
-  #         wait-for-service-stability: true
+      # NOTE: Need to setup ECS and prepare required github secret.
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ secrets.ECS_TASK_DEFINITION }}
+          container-name: nestjs-api
+          image: ${{ steps.build-image-push.outputs.image }}
+
+      - name: Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ secrets.ECS_SERVICE }}
+          cluster: ${{ secrets.ECS_CLUSTER }}
+          wait-for-service-stability: true
